@@ -1,20 +1,21 @@
 mod models;
 mod utils;
 
-use axum::extract::DefaultBodyLimit;
-use axum::response::IntoResponse;
 use axum::{
     body::StreamBody,
-    extract::{Multipart, Path},
+    extract::{DefaultBodyLimit, Multipart, Path},
     http::{Method, StatusCode},
+    response::IntoResponse,
     routing::{delete, get, post},
     Json, Router,
 };
 use http::HeaderMap;
 use log::info;
 use std::{net::SocketAddr, path::Path as FilePath, str::FromStr, time::Duration};
-use tokio::fs::{read_dir, remove_file, File};
-use tokio::io::AsyncWriteExt;
+use tokio::{
+    fs::{read_dir, remove_file, File},
+    io::AsyncWriteExt,
+};
 use tokio_util::io::ReaderStream;
 use tower_http::{
     cors::{Any, CorsLayer},
@@ -115,11 +116,11 @@ async fn video_upload_handler(multipart: Multipart) -> impl IntoResponse {
 }
 
 async fn archive_handler() -> Result<(StatusCode, Json<models::ArchiveResponse>), StatusCode> {
-    let archive_path = "./archive";
+    std::fs::create_dir_all("./archive").expect("Failed to create archive directory!!");
     let mut file_names = vec![];
 
     // Read the directory contents
-    match read_dir(archive_path).await {
+    match read_dir("./archive").await {
         Ok(mut entries) => {
             while let Some(entry) = entries.next_entry().await.unwrap() {
                 if let Ok(file_name) = entry.file_name().into_string() {
